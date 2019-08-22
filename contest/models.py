@@ -62,90 +62,24 @@ class SolvingAttempt(models.Model):
     )
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
-    grade = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0), MaxValueValidator(30)])
     start_time = models.DateTimeField(blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
-    is_purchased = models.BooleanField(default=False, blank=True)
-    purchased_from = models.ForeignKey("self", default=None, null=True, blank=True, on_delete=models.CASCADE)
-    purchased_timedelta = models.DurationField(null=True, blank=True)
-    purchased_grade = models.IntegerField(null=True, blank=True)
-    purchase_cost = models.IntegerField(default=0, blank=True)
+    cost = models.IntegerField()
+    grade = models.IntegerField(validators=(MinValueValidator(0), MaxValueValidator(100)), null=True, blank=True)
     state = models.CharField(default='S', max_length=2, choices=STATES, blank=True)
-    mystery_cost = models.IntegerField(default=0, blank=True)
 
     class Meta:
         unique_together = (('team', 'problem'), )
 
-    def solve_duration(self):
-        if self.end_time:
-            return self.end_time - self.start_time
-        else:
-            return None
-
-    def clean(self):
-        if not getattr(self, 'start_time', None):
-            # mystery cost must decrease from team strength
-            self.check_for_problem_acceptance()
-            self.start_time = timezone.now()
-        if self.grade is not None and not self.end_time:
-            self.end_time = timezone.now()
-            self.mark_as_solved()
-        elif self.end_time and self.grade is None:
-            self.state = 'C'
-        elif self.end_time and self.grade is not None and self.state != 'SD':
-            self.mark_as_solved()
-
-        try:
-            if self.purchased_timedelta and self.purchased_timedelta < self.get_duration:
-                raise ValidationError("Purchase timedelta can not be shorter than actual solving time.")
-            if self.purchased_grade and self.purchased_grade > self.grade:
-                raise ValidationError("Purchase grade can not be better than actual grade.")
-        except ValidationError as e:
-            raise e
-        except Exception as e:
-            raise ValidationError("Team should solve the problem first then they can submit purchase trade.")
-        if self.purchased_from and not self.is_purchased and self.state == 'SD':
-            self.is_purchased = True
-            self.team.strength -= self.purchased_from.purchase_cost
-            self.purchased_from.team.strength += self.purchased_from.purchase_cost
-            self.team.save()
-            self.purchased_from.team.save()
-        elif self.purchased_from and not self.is_purchased:
-            raise ValidationError("Team can not purchase problem before submitting it.")
-
-    def save(self, *args, **kwargs):
-        x = super().save(*args, **kwargs)
-        if self.state == 'SD':
-            for duel in self.team.duels.filter(pending=True, problem_id=self.problem.id):
-                duel.clean()
-                duel.save()
-        return x
-
-    def check_for_problem_acceptance(self):
-        if self.team.pending_duels:
-            f = False
-            pending_duels = self.team.duels.filter(pending=True)
-            for duel in pending_duels:
-                f = f or duel.problem_id == self.problem_id or duel.problem in self.team.problems.all()
-            if not f:
-                raise ValidationError("Team have pending duels.")
-        if self.team.active_problems >= 4:
-            raise ValidationError("Team cannot get another Problem before solving other 2 active problems")
-
-    def mark_as_solved(self):
-        self.state = 'SD'
-        self.team.strength += self.problem.get_reward(grade=self.grade)
-        self.team.save()
-
     @property
-    def get_duration(self):
+    def duration(self):
         if self.end_time:
             return self.end_time - self.start_time
         else:
             return None
 
     def __str__(self):
-        return f'{str(self.problem)} -> {str(self.team)}'
+        return f'{str(self.problem)} of {str(self.team)}'
 
 
 class Duel(models.Model):
