@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.urls import re_path, reverse
 from django.utils.html import format_html
 
-from .forms import RequestProblemForm
+from .forms import RequestProblemForm, ReturnProblemForm
 from .models import *
 
 
@@ -36,7 +36,7 @@ class TeamAdmin(admin.ModelAdmin):
     def team_actions(self, obj):
         return format_html(
             '<a class="button" href="{}">request problem</a>&nbsp;'
-            '<a class="button" href="{}">request problem</a>&nbsp;',
+            '<a class="button" href="{}">return problem</a>&nbsp;',
             reverse('admin:solve-attempt', args=[obj.pk]),
             reverse('admin:return-problem', args=[obj.pk])
         )
@@ -44,11 +44,12 @@ class TeamAdmin(admin.ModelAdmin):
     team_actions.short_description = 'Team Actions'
     team_actions.allow_tags = True
 
-    def proccess_return_problem(self, request, team_id, *args, **kwargs):
-        self.procces_actioni(
+    def process_return_problem(self, request, team_id, *args, **kwargs):
+        return self.process_action(
             request=request,
             team_id=team_id,
-            action_form=
+            action_form=ReturnProblemForm,
+            action_title='Return Problem'
         )
 
     def process_solve_attempt(self, request, team_id, *args, **kwargs):
