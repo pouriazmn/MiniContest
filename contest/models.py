@@ -43,33 +43,15 @@ class Problem(models.Model):
 class Team(models.Model):
 
     name = models.TextField()
-    strength = models.FloatField(default=0)
-    is_deleted = models.BooleanField(default=False)
+    score = models.FloatField(default=500)
     problems = models.ManyToManyField(Problem, through='SolvingAttempt', related_name='teams',
                                       related_query_name='team')
 
     class Meta:
-        ordering = ('-strength', )
-
-    @property
-    def pending_duels(self):
-        return self.duels.filter(pending=True).count()
-
-    @property
-    def pending_duels_display(self):
-        return f'{self.pending_duels} -> ' + ', '.join(map(lambda x: str(x.problem), self.duels.filter(pending=True)))
-
-    @property
-    def active_problems(self):
-        return self.solvingattempt_set.filter(state='S').count()
-
-    @property
-    def active_problems_display(self):
-        return f'{self.active_problems} -> ' + ', '.join(map(lambda x: f"{str(x.problem)} \"{x.state}\"",
-                                                             self.solvingattempt_set.exclude(state='SD')))
+        ordering = ('-score', )
 
     def __str__(self):
-        return f"T-{self.id}"
+        return f"{self.name}(T-{self.id})"
 
 
 class SolvingAttempt(models.Model):
