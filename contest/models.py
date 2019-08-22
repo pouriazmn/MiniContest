@@ -13,7 +13,7 @@ class Problem(models.Model):
             "min_cost": 50,
             "max_cost": 150,
             "reward": 1.4
-        }
+        },
         "M": {
             "display_name": "medium",
             "min_cost": 100,
