@@ -33,11 +33,18 @@ class Problem(models.Model):
         choices=map(lambda it: (it[0], it[1]['display_name']), LEVELS.items())
     )
 
-    def level_display(self, level):
-        return self.__class__.LEVELS[level]['display_name']
+    def level_display(self):
+        return self.__class__.LEVELS[self.level]['display_name']
 
     def calculate_reward(self, cost):
         return self.__class__.LEVELS[self.level]['reward'] * cost
+
+    def validate_cost(self, cost):
+        l = self.__class__.LEVELS[self.level]
+        if cost < l['min_cost']:
+            raise ValidationError(f"Min cost of problem type {l['display_name']} is {l['min_cost']}")
+        elif cost > l['max_cost']:
+            raise ValidationError(f"Max cost of problem type {l['display_name']} is {l['max_cost']}")
 
     def __str__(self):
         return f"P-{self.id}({self.level_display()})"
@@ -73,6 +80,10 @@ class SolvingAttempt(models.Model):
 
     class Meta:
         unique_together = (('team', 'problem'), )
+
+    def save(self, *args, **kwargs):
+        self.problem.validate_cost(self.cost)
+        super().save(*args, **kwargs)
 
     @property
     def duration(self):
