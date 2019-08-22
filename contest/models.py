@@ -28,7 +28,10 @@ class Problem(models.Model):
         }
     }
     id = models.IntegerField(primary_key=True)
-    level = models.CharField(max_length=2, choices=LEVELS)
+    level = models.CharField(
+        max_length=2,
+        choices=map(lambda it: (it[0], it[1]['display_name']), LEVELS.items())
+    )
 
     def level_display(self, level):
         return self.__class__.LEVELS[level]['display_name']
