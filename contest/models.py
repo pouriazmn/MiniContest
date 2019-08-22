@@ -63,6 +63,8 @@ class Team(models.Model):
     def clean(self):
         if self.score < 0:
             raise ValidationError("Team score cannot set to negative!")
+        if self.solvingattempt_set.filter(state='S').count() > 2:
+            raise ValidationError("Team cannot have more than 2 active problems!")
 
     def __str__(self):
         return f"{self.name}(T-{self.id})"
