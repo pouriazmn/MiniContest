@@ -148,8 +148,36 @@ class Duel(models.Model):
                                related_query_name='win_duel', null=True, blank=True)
     type = models.CharField(max_length=1,
                             choices=map(lambda it: (it[0], it[1]['display_name']), TYPES.items()))
-    pending = models.BooleanField(default=False, blank=True)
+    pending = models.BooleanField(default=True, blank=True)
 
     def delete(self, *args, **kwargs):
         # todo: return exchanged scores
         pass
+    
+    def save(self, *args, **kwargs):
+        set_winner = kwargs.pop('set_winner', False)
+        if set_winner:
+            if not self.pending:
+                raise ValidationError(f"this duel already has a winner {str(self.winner)}")
+            print(f"winner id ----> {self.winner_id}")
+            print(f"requested by id ----> {self.requested_by_id}")
+            print(f"to id: ------> {self.to_id}")
+            print(type(self.winner_id), type(self.requested_by_id))
+            if self.winner_id == self.requested_by.id:
+                print("WTF is going on?")
+                winner = self.requested_by
+                loser = self.to
+            else:
+                print("this is fucked up! but whyyyyy???")
+                winner = self.to
+                loser = self.requested_by
+            worth = loser.score * self.__class__.TYPES[self.type]['factor']
+            print(worth)
+            print(f"winner ---> {winner.id}, {winner}")
+            print(f"loser ---> {loser.id}, {loser}")
+            loser.score -= worth
+            winner.score += worth
+            loser.save()
+            winner.save()
+            self.pending = False
+        super().save(*args, **kwargs)

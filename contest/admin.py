@@ -10,7 +10,8 @@ from .forms import (
     ReturnProblemForm,
     SetGradeForm,
     ChangeScore,
-    RequestForDuelForm
+    RequestForDuelForm,
+    SetDuelWinner
 )
 from .models import *
 
@@ -161,8 +162,80 @@ class TeamAdmin(admin.ModelAdmin):
 #     list_filter = ('team', 'problem', 'state')
 
 
-# @admin.register(Duel)
-# class DuelAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'requested_by', 'to', 'problem', 'pending', 'worth', 'winner')
+@admin.register(Duel)
+class DuelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'requested_by', 'to', 'problem', 'pending', 'type', 'winner', 'duel_actions')
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            re_path(
+                r'^(?P<duel_id>.+)/set-winner/$',
+                self.admin_site.admin_view(self.process_set_winner),
+                name='set-winner',
+            ),
+        ]
+        return custom_urls + urls
+    
+    def duel_actions(self, obj):
+        return format_html(
+            '<a class="button" href="{}">set winner</a>&nbsp;',
+            reverse('admin:set-winner', args=[obj.pk]),
+        )
+    duel_actions.short_description = 'Duel Actions'
+    duel_actions.allow_tags = True
+
+    def process_set_winner(self, request, duel_id, *args, **kwargs):
+        return self.process_action(
+            request=request,
+            duel_id=duel_id,
+            action_form=SetDuelWinner,
+            action_title='Set Duel Winner'
+        )
+
+    def process_action(self, request,
+                       duel_id,
+                       action_form,
+                       action_title):
+
+        duel = self.get_object(request, duel_id)
+
+        if request.method == 'POST':
+            form = action_form(request.POST, duel=duel)
+            if form.is_valid():
+                try:
+                    form.save()
+                except Exception as e:
+                    self.message_user(request, f'sth went wrong: {str(e)}', level=messages.ERROR)
+                else:
+                    self.message_user(request, 'Success')
+                    url = reverse(
+                        'admin:contest_duel_changelist',
+                        current_app=self.admin_site.name,
+                    )
+                    return HttpResponseRedirect(url)
+            context = self.admin_site.each_context(request)
+            context['opts'] = self.model._meta
+            context['form'] = form
+            context['title'] = action_title
+
+            return TemplateResponse(
+                request,
+                'admin/team/team_action.html',
+                context,
+            )
+
+        form = action_form(duel=duel)
+        context = self.admin_site.each_context(request)
+        context['opts'] = self.model._meta
+        context['form'] = form
+        context['title'] = action_title
+
+        return TemplateResponse(
+            request,
+            'admin/team/team_action.html',
+            context,
+        )
+
 
 admin.site.register(Problem)

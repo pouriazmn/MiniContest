@@ -165,3 +165,36 @@ class RequestForDuelForm(GeneralTeamForm):
         )
         d.save()
         return d
+
+
+class SetDuelWinner(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        duel = kwargs.pop('duel')
+        self.duel = duel
+        super().__init__(*args, **kwargs)
+        self.fields['requested_by'] = forms.ChoiceField(
+            choices=((duel.requested_by.id, str(duel.requested_by)), ),
+            disabled=True,
+            required=False
+        )
+        self.fields['to'] = forms.ChoiceField(
+            choices=((duel.to.id, str(duel.to)), ),
+            disabled=True,
+            required=False
+        )
+        self.fields['type'] = forms.CharField(initial=duel.get_type_display(), disabled=True, required=False)
+        self.fields['winner'] = forms.ChoiceField(
+            choices=(
+                (duel.requested_by.id, str(duel.requested_by)),
+                (duel.to.id, str(duel.to))
+            )
+        )
+    
+    def clean_winner(self):
+        return int(self.cleaned_data['winner'])
+
+    def save(self):
+        self.duel.winner_id = self.cleaned_data['winner']
+        self.duel.save(set_winner=True)
+        return self.duel
