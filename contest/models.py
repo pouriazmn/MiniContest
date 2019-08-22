@@ -48,7 +48,7 @@ class Problem(models.Model):
             raise ValidationError(f"Max cost of problem type {l['display_name']} is {l['max_cost']}")
 
     def __str__(self):
-        return f"P-{self.id}({self.level_display()})"
+        return f"{self.type}-{self.id}({self.level_display()})"
 
 
 class Team(models.Model):
@@ -70,6 +70,13 @@ class Team(models.Model):
     def can_request_problem(self):
         if self.solvingattempt_set.filter(state='S').count() >= 2:
             raise ValidationError("Team cannot have more than 2 active problems!")
+
+    def can_request_duel(self):
+        if self.current_duels_count > 0:
+            raise ValidationError(f"Team {str(self)} cannot have more than one duel at a time")
+
+    def current_duels_count(self):
+        return self.duels.filter(pending=False).count() + self.duel_requests.filter(pending=False).count()
 
     def __str__(self):
         return f"{self.name}(T-{self.id})"
@@ -146,4 +153,3 @@ class Duel(models.Model):
     def delete(self, *args, **kwargs):
         # todo: return exchanged scores
         pass
-

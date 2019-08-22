@@ -1,9 +1,13 @@
+from random import randint
+
+from datetimepicker.widgets import DateTimePicker
 from django import forms
 from django.contrib.admin import widgets
 from django.contrib.admin.widgets import AdminSplitDateTime
 from django.utils import timezone
-from datetimepicker.widgets import DateTimePicker
-from .models import Problem, SolvingAttempt, Team
+from nbformat import ValidationError
+
+from .models import Problem, SolvingAttempt, Team, Duel
 
 
 class GeneralTeamForm(forms.Form):
@@ -30,7 +34,7 @@ class RequestProblemForm(GeneralTeamForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         problem_choices = tuple(map(lambda problem: (problem.id, str(problem)),
-                                    Problem.objects.exclude(team__in=(self.team_id, ))))
+                                    Problem.objects.exclude(team__in=(self.team_id, ), type='D')))
         self.fields['problem'] = forms.ChoiceField(choices=problem_choices, required=True)
         self.fields['start_time'] = forms.DateTimeField(required=False)
         self.fields['cost'] = forms.IntegerField(min_value=50, max_value=320, required=True)
@@ -101,7 +105,6 @@ class ChangeScore(GeneralTeamForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        team = Team.objects.get(id=self.team_id)
         self.fields['change_score'] = forms.FloatField()
 
     def clean_change_score(self):
@@ -115,3 +118,50 @@ class ChangeScore(GeneralTeamForm):
         team.score += self.cleaned_data['change_score']
         print(team, team.score, self.cleaned_data['change_score'])
         team.save()
+
+
+class RequestForDuelForm(GeneralTeamForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        to_teams = list(map(
+            lambda t: (t.id, str(t)),
+            filter(lambda t: t.current_duels_count() == 0, Team.objects.all().exclude(id=self.team_id))
+        ))
+        to_teams.insert(0, (None, '----'))
+        problem_choices = list(map(
+            lambda p: (p.id, str(p)),
+            Problem.objects.filter(type='D')
+        ))
+        problem_choices.insert(0, (None, '----'))
+
+        self.fields['to_team'] = forms.ChoiceField(choices=to_teams, label='To', required=False)
+        self.fields['problem'] = forms.ChoiceField(choices=problem_choices, required=False)
+
+    def clean_to_team(self):
+        to_team = self.cleaned_data['to_team']
+        if not to_team:
+            to_teams = list(filter(lambda t: t.current_duels_count() == 0, Team.objects.exclude(id=self.team_id)))
+            l = len(to_teams)
+            to_team = to_teams[randint(0, l-1)]
+        return to_team
+
+    def clean_problem(self):
+        self.clean_to_team()
+        problem = self.cleaned_data['problem']
+        if not problem:
+            problems = Problem.objects.filter(type='D').exclude(
+                duel__requested_by__in=(self.team_id, self.cleaned_data['to_team']),
+                duel__to__in=(self.team_id, self.cleaned_data['to_team']))
+            l = len(problems)
+            problem = problems[randint(0, l-1)]
+        return problem
+
+    def save(self):
+        d = Duel(
+            requested_by_id=self.team_id,
+            to=self.cleaned_data['to_team'],
+            problem=self.cleaned_data['problem']
+        )
+        d.save()
+        return d
