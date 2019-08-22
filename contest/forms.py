@@ -137,6 +137,9 @@ class RequestForDuelForm(GeneralTeamForm):
 
         self.fields['to_team'] = forms.ChoiceField(choices=to_teams, label='To', required=False)
         self.fields['problem'] = forms.ChoiceField(choices=problem_choices, required=False)
+        self.fields['type'] = forms.ChoiceField(
+            choices=map(lambda it: (it[0], it[1]['display_name']), Duel.TYPES.items())
+        )
 
     def clean_to_team(self):
         to_team = self.cleaned_data['to_team']
@@ -161,7 +164,8 @@ class RequestForDuelForm(GeneralTeamForm):
         d = Duel(
             requested_by_id=self.team_id,
             to=self.cleaned_data['to_team'],
-            problem=self.cleaned_data['problem']
+            problem=self.cleaned_data['problem'],
+            type=self.cleaned_data['type']
         )
         d.save()
         return d

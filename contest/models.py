@@ -76,7 +76,7 @@ class Team(models.Model):
             raise ValidationError(f"Team {str(self)} cannot have more than one duel at a time")
 
     def current_duels_count(self):
-        return self.duels.filter(pending=False).count() + self.duel_requests.filter(pending=False).count()
+        return self.duels.filter(pending=True).count() + self.duel_requests.filter(pending=True).count()
 
     def __str__(self):
         return f"{self.name}(T-{self.id})"
@@ -159,22 +159,22 @@ class Duel(models.Model):
         if set_winner:
             if not self.pending:
                 raise ValidationError(f"this duel already has a winner {str(self.winner)}")
-            print(f"winner id ----> {self.winner_id}")
-            print(f"requested by id ----> {self.requested_by_id}")
-            print(f"to id: ------> {self.to_id}")
-            print(type(self.winner_id), type(self.requested_by_id))
+            # print(f"winner id ----> {self.winner_id}")
+            # print(f"requested by id ----> {self.requested_by_id}")
+            # print(f"to id: ------> {self.to_id}")
+            # print(type(self.winner_id), type(self.requested_by_id))
             if self.winner_id == self.requested_by.id:
-                print("WTF is going on?")
+                # print("WTF is going on?")
                 winner = self.requested_by
                 loser = self.to
             else:
-                print("this is fucked up! but whyyyyy???")
+                # print("this is fucked up! but whyyyyy???")
                 winner = self.to
                 loser = self.requested_by
             worth = loser.score * self.__class__.TYPES[self.type]['factor']
             print(worth)
-            print(f"winner ---> {winner.id}, {winner}")
-            print(f"loser ---> {loser.id}, {loser}")
+            # print(f"winner ---> {winner.id}, {winner}")
+            # print(f"loser ---> {loser.id}, {loser}")
             loser.score -= worth
             winner.score += worth
             loser.save()
