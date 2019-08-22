@@ -7,44 +7,37 @@ from django.utils import timezone
 
 
 class Problem(models.Model):
-    REWARDS = {
-        'E': 400,
-        'M': 600,
-        'H': 800
+    LEVELS = {
+        "E": {
+            "display_name": "easy",
+            "min_cost": 50,
+            "max_cost": 150,
+            "reward": 1.4
+        }
+        "M": {
+            "display_name": "medium",
+            "min_cost": 100,
+            "max_cost": 200,
+            "reward": 1.6
+        },
+        "H": {
+            "display_name": "hard",
+            "min_cost": 150,
+            "max_cost": 320,
+            "reward": 1.9
+        }
     }
-
-    DARSADS = {
-        'E': 0.06,
-        'M': 0.08,
-        'H': 0.10
-    }
-
-    LEVELS = (
-        ('E', 'Easy'),
-        ('M', 'Medium'),
-        ('H', 'Hard')
-    )
     id = models.IntegerField(primary_key=True)
-    title = models.TextField()
     level = models.CharField(max_length=2, choices=LEVELS)
-    is_mystery = models.BooleanField(default=False)
-    cost = models.IntegerField(default=0)
+
+    def level_display(self, level):
+        return self.__class__.LEVELS[level]['display_name']
+
+    def calculate_reward(self, cost):
+        return self.__class__.LEVELS[self.level]['reward'] * cost
 
     def __str__(self):
-        if self.is_mystery:
-            return f"mystery-{self.id}"
-        else:
-            return f"problem-{self.id}({self.level})"
-
-    def get_reward(self, cost=None, grade=100):
-        if not self.is_mystery:
-            return self.__class__.REWARDS[self.level]*(grade/30)
-        return 0
-
-    def get_darsad(self):
-        if not self.is_mystery:
-            return self.__class__.DARSADS[self.level]
-        return 0
+        return f"P-{self.id}({self.level_display()})"
 
 
 class Team(models.Model):
