@@ -60,6 +60,10 @@ class Team(models.Model):
     class Meta:
         ordering = ('-score', )
 
+    def clean(self):
+        if self.score < 0:
+            raise ValidationError("Team score cannot set to negative!")
+
     def __str__(self):
         return f"{self.name}(T-{self.id})"
 
@@ -82,7 +86,16 @@ class SolvingAttempt(models.Model):
         unique_together = (('team', 'problem'), )
 
     def save(self, *args, **kwargs):
-        self.problem.validate_cost(self.cost)
+        cal_reward = kwargs.pop('cal_reward', False)
+        buy_problem = kwargs.pop('buy_problem', False)
+        if buy_problem:
+            self.problem.validate_cost(self.cost)
+            self.team.score -= self.cost
+            self.team.save()
+        if cal_reward:
+            price = self.problem.calculate_reward(self.cost) * (self.grade/100)
+            self.team.score += price
+            self.team.save()
         super().save(*args, **kwargs)
 
     @property

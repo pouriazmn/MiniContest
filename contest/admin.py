@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.urls import re_path, reverse
 from django.utils.html import format_html
 
-from .forms import RequestProblemForm, ReturnProblemForm
+from .forms import RequestProblemForm, ReturnProblemForm, SetGradeForm
 from .models import *
 
 
@@ -30,19 +30,34 @@ class TeamAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.process_return_problem),
                 name='return-problem',
             ),
+            re_path(
+                r'^(?P<team_id>.+)/set-grade/$',
+                self.admin_site.admin_view(self.process_set_grade),
+                name='set-grade',
+            ),
         ]
         return custom_urls + urls
 
     def team_actions(self, obj):
         return format_html(
             '<a class="button" href="{}">request problem</a>&nbsp;'
+            '<a class="button" href="{}">set grade</a>&nbsp;'
             '<a class="button" href="{}">return problem</a>&nbsp;',
             reverse('admin:solve-attempt', args=[obj.pk]),
+            reverse('admin:set-grade', args=[obj.pk]),
             reverse('admin:return-problem', args=[obj.pk])
         )
 
     team_actions.short_description = 'Team Actions'
     team_actions.allow_tags = True
+
+    def process_set_grade(self, request, team_id, *args, **kwargs):
+        return self.process_action(
+            request=request,
+            team_id=team_id,
+            action_form=SetGradeForm,
+            action_title='Return Problem'
+        )
 
     def process_return_problem(self, request, team_id, *args, **kwargs):
         return self.process_action(
