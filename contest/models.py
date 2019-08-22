@@ -32,6 +32,7 @@ class Problem(models.Model):
         max_length=2,
         choices=map(lambda it: (it[0], it[1]['display_name']), LEVELS.items())
     )
+    type = models.CharField(max_length=1, choices=(('P', 'Problem'), ('D', 'Duel')))
 
     def level_display(self):
         return self.__class__.LEVELS[self.level]['display_name']
@@ -66,6 +67,10 @@ class Team(models.Model):
         if self.solvingattempt_set.filter(state='S').count() > 2:
             raise ValidationError("Team cannot have more than 2 active problems!")
 
+    def can_request_problem(self):
+        if self.solvingattempt_set.filter(state='S').count() >= 2:
+            raise ValidationError("Team cannot have more than 2 active problems!")
+
     def __str__(self):
         return f"{self.name}(T-{self.id})"
 
@@ -92,6 +97,7 @@ class SolvingAttempt(models.Model):
         buy_problem = kwargs.pop('buy_problem', False)
         if buy_problem:
             self.problem.validate_cost(self.cost)
+            self.team.can_request_problem()
             self.team.score -= self.cost
             self.team.save()
         if cal_reward:
@@ -112,9 +118,20 @@ class SolvingAttempt(models.Model):
 
 
 class Duel(models.Model):
-
-    DRAW_DURATION = timedelta(seconds=20)
-
+    TYPES = {
+        '1': {
+            'display_name': 'Type1 8%',
+            'factor': 0.08
+        },
+        '2': {
+            'display_name': 'Type2 12%',
+            'factor': 0.12
+        },
+        '3': {
+            'display_name': 'Type3 16%',
+            'factor': 0.16
+        }
+    }
     requested_by = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='duel_requests',
                                      related_query_name='duel_request')
     to = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='duels',
@@ -122,77 +139,11 @@ class Duel(models.Model):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     winner = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='duel_wins',
                                related_query_name='win_duel', null=True, blank=True)
-    worth = models.FloatField(null=True, blank=True)
+    type = models.CharField(max_length=1,
+                            choices=map(lambda it: (it[0], it[1]['display_name']), TYPES.items()))
     pending = models.BooleanField(default=False, blank=True)
 
     def delete(self, *args, **kwargs):
-        loser = self.requested_by if self.requested_by_id != self.winner_id else self.to
-        loser.strength += self.worth
-        self.winner.strength -= self.worth
-        loser.save()
-        self.winner.save()
-        return super().delete(*args, **kwargs)
+        # todo: return exchanged scores
+        pass
 
-    def get_pending(self):
-        return self.pending
-
-    def clean(self):
-        self.check_if_can_set_duel()
-        winner, pending = self.get_winner()
-        if winner:
-            self.winner = winner
-            self.worth, loser = self.cal_worth()
-            self.trade_strength(loser)
-        self.pending = pending
-
-    def check_if_can_set_duel(self):
-        c = 0
-        for duel in self.requested_by.duel_requests.all():
-            if duel.problem_id == self.problem_id and duel != self:
-                c += 1
-        if c >= 2:
-            raise ValidationError("Team cannot request for duel on same problem more than 2 times")
-
-        if self.requested_by.strength < 0:
-            raise ValidationError("Team cannot request for duel with less than 2000 strength")
-
-    def get_winner(self):
-        try:
-            solve_p1 = self.requested_by.solvingattempt_set.get(problem_id=self.problem.id)
-        except SolvingAttempt.DoesNotExist:
-            raise ValidationError(f"Team {str(self.requested_by)} should solve the problem themselves.")
-        try:
-            solve_p2 = self.to.solvingattempt_set.get(problem_id=self.problem.id)
-        except SolvingAttempt.DoesNotExist:
-            return None, True
-        if solve_p1.state != 'SD':
-            raise ValidationError(f"Team {str(self.requested_by)} should solve the problem themselves.")
-        if solve_p2.state != 'SD':
-            return None, True
-        p1_score = int(solve_p1.purchased_from.grade if solve_p1.purchased_from else solve_p1.grade)
-        p2_score = int(solve_p2.purchased_from.grade if solve_p2.purchased_from else solve_p2.grade)
-        if p1_score > p2_score:
-            return self.requested_by, False
-        elif p2_score > p1_score:
-            return self.to, False
-        else:
-            p1_time = solve_p1.purchased_from.get_duration if solve_p1.purchased_from else \
-                solve_p1.get_duration
-            p2_time = solve_p2.purchased_from.get_duration if solve_p2.purchased_from else \
-                solve_p2.get_duration
-            if p1_time - p2_time > Duel.DRAW_DURATION:
-                return self.to, False
-            elif p2_time - p1_time > Duel.DRAW_DURATION:
-                return self.requested_by, False
-            else:
-                return None, False
-
-    def cal_worth(self):
-        loser = self.requested_by if self.requested_by != self.winner else self.to
-        return loser.strength * self.problem.get_darsad(), loser
-
-    def trade_strength(self, loser):
-        loser.strength -= self.worth
-        self.winner.strength += self.worth
-        loser.save()
-        self.winner.save()
