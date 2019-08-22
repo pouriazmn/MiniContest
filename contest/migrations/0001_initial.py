@@ -27,8 +27,10 @@ class Migration(migrations.Migration):
                 ('start_time', models.DateTimeField(blank=True)),
                 ('end_time', models.DateTimeField(blank=True, null=True)),
                 ('cost', models.IntegerField()),
-                ('grade', models.IntegerField(blank=True, null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)])),
-                ('state', models.CharField(blank=True, choices=[('S', 'Solving'), ('C', 'Checking'), ('SD', 'Solved')], default='S', max_length=2)),
+                ('grade', models.IntegerField(blank=True, null=True, validators=[
+                 django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)])),
+                ('state', models.CharField(blank=True, choices=[
+                 ('S', 'Solving'), ('C', 'Checking'), ('SD', 'Solved')], default='S', max_length=2)),
                 ('problem', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contest.Problem')),
             ],
         ),
@@ -38,7 +40,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.TextField()),
                 ('score', models.FloatField(default=500)),
-                ('problems', models.ManyToManyField(related_name='teams', related_query_name='team', through='contest.SolvingAttempt', to='contest.Problem')),
+                ('problems', models.ManyToManyField(related_name='teams', related_query_name='team',
+                                                    through='contest.SolvingAttempt', to='contest.Problem')),
             ],
             options={
                 'ordering': ('-score',),
@@ -56,9 +59,14 @@ class Migration(migrations.Migration):
                 ('worth', models.FloatField(blank=True, null=True)),
                 ('pending', models.BooleanField(blank=True, default=False)),
                 ('problem', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contest.Problem')),
-                ('requested_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='duel_requests', related_query_name='duel_request', to='contest.Team')),
-                ('to', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='duels', related_query_name='duel', to='contest.Team')),
-                ('winner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='duel_wins', related_query_name='win_duel', to='contest.Team')),
+                ('requested_by', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='duel_requests', related_query_name='duel_request', to='contest.Team')),
+                ('to', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                         related_name='duels', related_query_name='duel', to='contest.Team')),
+                ('winner', models.ForeignKey(
+                    blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
+                    related_name='duel_wins', related_query_name='win_duel', to='contest.Team')),
             ],
         ),
         migrations.AlterUniqueTogether(
