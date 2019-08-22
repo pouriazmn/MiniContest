@@ -106,7 +106,7 @@ class SolvingAttempt(models.Model):
             return None
 
     def __str__(self):
-        return f'{str(self.problem)} of {str(self.team)}'
+        return f'{str(self.problem)} of {str(self.team)} for {self.cost}'
 
 
 class Duel(models.Model):
