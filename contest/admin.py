@@ -18,7 +18,7 @@ from .models import *
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'score', 'team_actions')
+    list_display = ('id', 'name', 'score', 'current_duels_count', 'solved_problems', 'team_actions', )
     readonly_fields = (
         'id',
         'team_actions'
@@ -164,7 +164,9 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Duel)
 class DuelAdmin(admin.ModelAdmin):
-    list_display = ('id', 'requested_by', 'to', 'problem', 'pending', 'type', 'winner', 'duel_actions')
+    list_display = ('id', 'requested_by', 'req_returned',
+                    'to', 'to_returned', 'problem', 'pending', 'type', 'winner', 'duel_actions')
+    list_filter = ('requested_by', 'to', 'pending')
 
     def get_urls(self):
         urls = super().get_urls()

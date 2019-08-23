@@ -152,7 +152,6 @@ class RequestForDuelForm(GeneralTeamForm):
         return to_team
 
     def clean_problem(self):
-        self.clean_to_team()
         problem = self.cleaned_data['problem']
         if not problem:
             problems = Problem.objects.filter(type='D').exclude(
@@ -169,7 +168,7 @@ class RequestForDuelForm(GeneralTeamForm):
             problem=self.cleaned_data['problem'],
             type=self.cleaned_data['type']
         )
-        d.save()
+        d.save(set_duel=True)
         return d
 
 

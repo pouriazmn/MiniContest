@@ -78,6 +78,10 @@ class Team(models.Model):
     def current_duels_count(self):
         return self.duels.filter(to_returned=False).count() + self.duel_requests.filter(req_returned=False).count()
 
+    @property
+    def solved_problems(self):
+        return self.solvingattempt_set.filter(state='SD').count()
+
     def __str__(self):
         return f"{self.name}(T-{self.id})"
 
@@ -141,16 +145,16 @@ class Duel(models.Model):
     }
     requested_by = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='duel_requests',
                                      related_query_name='duel_request')
+    req_returned = models.BooleanField(default=False, blank=True)
     to = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='duels',
                            related_query_name='duel')
+    to_returned = models.BooleanField(default=False, blank=True)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     winner = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='duel_wins',
                                related_query_name='win_duel', null=True, blank=True)
     type = models.CharField(max_length=1,
                             choices=map(lambda it: (it[0], it[1]['display_name']), TYPES.items()))
     pending = models.BooleanField(default=True, blank=True)
-    req_returned = models.BooleanField(default=False, blank=True)
-    to_returned = models.BooleanField(default=False, blank=True)
 
     def delete(self, *args, **kwargs):
         # todo: return exchanged scores
@@ -158,6 +162,12 @@ class Duel(models.Model):
 
     def save(self, *args, **kwargs):
         set_winner = kwargs.pop('set_winner', False)
+        set_duel = kwargs.pop('set_duel', False)
+        if set_duel:
+            if self.requested_by.current_duels_count() > 0:
+                raise ValidationError(f"Team {self.requested_by} is currently on a duel and can't request for another one!")
+            elif self.to.current_duels_count() > 0:
+                raise ValidationError(f"Team {self.to} is currently on a duel! if this is a random team selection please try again!")
         if set_winner:
             if not self.pending:
                 raise ValidationError(f"this duel already has a winner {str(self.winner)}")
