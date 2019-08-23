@@ -76,7 +76,7 @@ class Team(models.Model):
             raise ValidationError(f"Team {str(self)} cannot have more than one duel at a time")
 
     def current_duels_count(self):
-        return self.duels.filter(pending=True).count() + self.duel_requests.filter(pending=True).count()
+        return self.duels.filter(to_returned=False).count() + self.duel_requests.filter(req_returned=False).count()
 
     def __str__(self):
         return f"{self.name}(T-{self.id})"
@@ -149,11 +149,13 @@ class Duel(models.Model):
     type = models.CharField(max_length=1,
                             choices=map(lambda it: (it[0], it[1]['display_name']), TYPES.items()))
     pending = models.BooleanField(default=True, blank=True)
+    req_returned = models.BooleanField(default=False, blank=True)
+    to_returned = models.BooleanField(default=False, blank=True)
 
     def delete(self, *args, **kwargs):
         # todo: return exchanged scores
         pass
-    
+
     def save(self, *args, **kwargs):
         set_winner = kwargs.pop('set_winner', False)
         if set_winner:
@@ -180,4 +182,6 @@ class Duel(models.Model):
             loser.save()
             winner.save()
             self.pending = False
+            self.req_returned = True
+            self.to_returned = True
         super().save(*args, **kwargs)

@@ -147,6 +147,8 @@ class RequestForDuelForm(GeneralTeamForm):
             to_teams = list(filter(lambda t: t.current_duels_count() == 0, Team.objects.exclude(id=self.team_id)))
             l = len(to_teams)
             to_team = to_teams[randint(0, l-1)]
+        else:
+            to_team = Team.objects.get(id=to_team)
         return to_team
 
     def clean_problem(self):
@@ -194,7 +196,7 @@ class SetDuelWinner(forms.Form):
                 (duel.to.id, str(duel.to))
             )
         )
-    
+
     def clean_winner(self):
         return int(self.cleaned_data['winner'])
 
