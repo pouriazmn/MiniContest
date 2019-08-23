@@ -34,7 +34,7 @@ class RequestProblemForm(GeneralTeamForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         problem_choices = tuple(map(lambda problem: (problem.id, str(problem)),
-                                    Problem.objects.exclude(team__in=(self.team_id, ), type='D')))
+                                    Problem.objects.exclude(team__in=(self.team_id, )).filter(type='P')))
         self.fields['problem'] = forms.ChoiceField(choices=problem_choices, required=True)
         self.fields['start_time'] = forms.DateTimeField(required=False)
         self.fields['cost'] = forms.IntegerField(min_value=50, max_value=320, required=True)
