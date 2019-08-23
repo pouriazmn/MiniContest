@@ -33,13 +33,14 @@ class TeamSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Team
-        exclude = ('is_deleted', )
+        fields = '__all__'
 
 
 class DuelSerializer(serializers.ModelSerializer):
     requested_by_id = serializers.IntegerField(write_only=True, required=True)
     to_id = serializers.IntegerField(write_only=True, required=True)
     problem_id = serializers.IntegerField(write_only=True, required=True)
+
     class Meta:
         model = Duel
         fields = '__all__'
