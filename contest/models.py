@@ -107,6 +107,7 @@ class SolvingAttempt(models.Model):
         cal_reward = kwargs.pop('cal_reward', False)
         buy_problem = kwargs.pop('buy_problem', False)
         if buy_problem:
+
             self.problem.validate_cost(self.cost)
             self.team.can_request_problem()
             self.team.score -= self.cost
@@ -199,6 +200,7 @@ class Duel(models.Model):
 
 class Transaction(models.Model):
     TRANSACTION_CHOICES = (
+        ('PR', 'Problem Request'),
         ('PS', 'Problem Solving'),
         ('DL', 'Duel'),
         ('MF', 'Mafia'),
