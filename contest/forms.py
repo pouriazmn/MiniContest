@@ -107,7 +107,7 @@ class ChangeScore(GeneralTeamForm):
         super().__init__(*args, **kwargs)
         self.fields['change_score'] = forms.FloatField()
         self.fields['reason'] = forms.ChoiceField(choices=Transaction.TRANSACTION_CHOICES)
-        self.fields['extra'] = forms.CharField()
+        self.fields['extra'] = forms.CharField(required=False)
 
     def clean_change_score(self):
         s = self.cleaned_data.get('change_score')
