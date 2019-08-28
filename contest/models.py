@@ -120,9 +120,13 @@ class SolvingAttempt(models.Model):
             self.team.can_request_problem()
             self.team.score -= self.cost
             self.team.save()
+            Transaction.objects.create(decreased_from=self.team, increased_to=Team.SHEKIB_JIB, amount=self.cost,
+                                       reason=Transaction.PROBLEM_REQ)
         if cal_reward:
             price = self.problem.calculate_reward(self.cost) * (self.grade/100)
             self.team.score += price
+            Transaction.objects.create(decreased_from=Team.SHEKIB_JIB, increased_to=self.team, amount=price,
+                                       reason=Transaction.PROBLEM_SLV)
             self.team.save()
         super().save(*args, **kwargs)
 
@@ -207,6 +211,10 @@ class Duel(models.Model):
 
 
 class Transaction(models.Model):
+    PROBLEM_REQ = 'PR'
+    PROBLEM_SLV = 'PS'
+    DUEL = 'DL'
+    MAFIA = 'MF'
     TRANSACTION_CHOICES = (
         ('PR', 'Problem Request'),
         ('PS', 'Problem Solving'),
@@ -214,9 +222,9 @@ class Transaction(models.Model):
         ('MF', 'Mafia'),
     )
     decreased_from = models.ForeignKey(Team, related_name='decreases', related_query_name='decrease',
-                                       on_delete=models.SET_NULL)
+                                       on_delete=models.SET_NULL, null=True)
     increased_to = models.ForeignKey(Team, related_name='increases', related_query_name='increase',
-                                     on_delete=models.SET_NULL)
+                                     on_delete=models.SET_NULL, null=True)
     amount = models.FloatField()
 
-    for_ = models.CharField(max_length=1, choices=TRANSACTION_CHOICES)
+    reason = models.CharField(max_length=1, choices=TRANSACTION_CHOICES)
