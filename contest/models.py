@@ -74,7 +74,7 @@ class Team(models.Model):
             raise ValidationError("Team cannot have more than 2 active problems!")
 
     def can_request_duel(self):
-        if self.current_duels_count > 0:
+        if self.current_duels_count() > 0:
             raise ValidationError(f"Team {str(self)} cannot have more than one duel at a time")
 
     def current_duels_count(self):
