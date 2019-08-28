@@ -253,4 +253,13 @@ class DuelAdmin(admin.ModelAdmin):
         )
 
 
+@admin.register(Transaction)
+class DuelAdmin(admin.ModelAdmin):
+    list_display = ('decreased_from', 'increased_to', 'amount', 'reason', 'extra')
+
+    search_fields = ('decreased_from__name', 'increased_to__name')
+
+    list_filter = ('reason', 'decreased_from', 'increased_to')
+
+
 admin.site.register(Problem)
