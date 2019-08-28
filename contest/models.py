@@ -202,6 +202,8 @@ class Duel(models.Model):
             # print(f"loser ---> {loser.id}, {loser}")
             loser.score -= worth
             winner.score += worth
+            Transaction.objects.create(decreased_from=loser, increased_to=winner, amount=worth,
+                                       reason=Transaction.DUEL, extra=f'problem -> f{str(self.problem)}')
             loser.save()
             winner.save()
             self.pending = False
@@ -228,3 +230,5 @@ class Transaction(models.Model):
     amount = models.FloatField()
 
     reason = models.CharField(max_length=1, choices=TRANSACTION_CHOICES)
+
+    extra = models.TextField(null=True)
