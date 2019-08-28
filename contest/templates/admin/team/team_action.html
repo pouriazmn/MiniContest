@@ -5,7 +5,7 @@
 
 <div id="content-main">
 
-  <form action="" method="POST">
+  <form action="" method="POST" onsubmit="return confirm('Are you sure you want to submit?');">
 
     {% csrf_token %}
     {% if form.non_field_errors|length > 0 %}
