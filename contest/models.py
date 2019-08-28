@@ -67,6 +67,7 @@ class Team(models.Model):
                                       related_query_name='team')
 
     objects = TeamManager()
+    allobjs = models.Manager()
 
     class Meta:
         ordering = ('-score', )
@@ -98,9 +99,9 @@ class Team(models.Model):
     @classproperty
     def SHEKIB_JIB(self):
         try:
-            return Team.objects.get(id=-1)
+            return Team.allobjs.get(id=-1)
         except Team.DoesNotExist:
-            return Team.objects.create(id=-1, name='SHEKIB_JIB', score=float('+inf'))
+            return Team.allobjs.create(id=-1, name='SHEKIB_JIB', score=float('+inf'))
 
 
 class SolvingAttempt(models.Model):
