@@ -136,7 +136,18 @@ class TeamAdmin(admin.ModelAdmin):
                     )
                     return HttpResponseRedirect(url)
             else:
-                self.message_user(request, "sth went wrong")
+                self.message_user(request, f"sth went wrong: {form.errors}", level=messages.ERROR)
+                context = self.admin_site.each_context(request)
+                context['opts'] = self.model._meta
+                context['form'] = form
+                context['team'] = team
+                context['title'] = action_title
+
+                return TemplateResponse(
+                    request,
+                    'admin/team/team_action.html',
+                    context,
+                )
 
         form = action_form(team_id=team_id)
         context = self.admin_site.each_context(request)
