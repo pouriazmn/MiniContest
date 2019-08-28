@@ -7,7 +7,7 @@ from django.contrib.admin.widgets import AdminSplitDateTime
 from django.utils import timezone
 from nbformat import ValidationError
 
-from .models import Problem, SolvingAttempt, Team, Duel
+from .models import Problem, SolvingAttempt, Team, Duel, Transaction
 
 
 class GeneralTeamForm(forms.Form):
@@ -106,6 +106,8 @@ class ChangeScore(GeneralTeamForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['change_score'] = forms.FloatField()
+        self.fields['reason'] = forms.ChoiceField(choices=Transaction.TRANSACTION_CHOICES)
+        self.fields['extra'] = forms.CharField()
 
     def clean_change_score(self):
         s = self.cleaned_data.get('change_score')
@@ -115,8 +117,12 @@ class ChangeScore(GeneralTeamForm):
 
     def save(self):
         team = Team.objects.get(id=self.team_id)
-        team.score += self.cleaned_data['change_score']
-        print(team, team.score, self.cleaned_data['change_score'])
+        amount = self.cleaned_data['change_score']
+        reason = self.cleaned_data['reason']
+        extra = self.cleaned_data['extra']
+        team.score += amount
+        Transaction.objects.create(decreased_from=Team.SHEKIB_JIB, increased_to=team, amount=amount,
+                                   reason=reason, extra=extra)
         team.save()
 
 
