@@ -5,6 +5,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
+from contest.utils import classproperty
+
 
 class Problem(models.Model):
     LEVELS = {
@@ -85,6 +87,13 @@ class Team(models.Model):
     def __str__(self):
         return f"{self.name}(T-{self.id})"
 
+    @classproperty
+    def SHEKIB_JIB(self):
+        try:
+            return Team.objects.get(id=-1)
+        except Team.DoesNotExist:
+            return Team.objects.create(id=-1, name='SHEKIB_JIB', score=float('+inf'))
+
 
 class SolvingAttempt(models.Model):
     STATES = (
@@ -107,7 +116,6 @@ class SolvingAttempt(models.Model):
         cal_reward = kwargs.pop('cal_reward', False)
         buy_problem = kwargs.pop('buy_problem', False)
         if buy_problem:
-
             self.problem.validate_cost(self.cost)
             self.team.can_request_problem()
             self.team.score -= self.cost
