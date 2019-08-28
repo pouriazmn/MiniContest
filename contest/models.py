@@ -14,19 +14,19 @@ class Problem(models.Model):
             "display_name": "easy",
             "min_cost": 50,
             "max_cost": 150,
-            "reward": 1.4
+            "reward": 1
         },
         "M": {
             "display_name": "medium",
             "min_cost": 100,
             "max_cost": 200,
-            "reward": 1.6
+            "reward": 1
         },
         "H": {
             "display_name": "hard",
             "min_cost": 150,
             "max_cost": 320,
-            "reward": 1.9
+            "reward": 1
         }
     }
     id = models.IntegerField(primary_key=True)
@@ -106,7 +106,7 @@ class SolvingAttempt(models.Model):
     start_time = models.DateTimeField(blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
     cost = models.IntegerField()
-    grade = models.IntegerField(validators=(MinValueValidator(0), MaxValueValidator(100)), null=True, blank=True)
+    grade = models.IntegerField(validators=(MinValueValidator(0), MaxValueValidator(200)), null=True, blank=True)
     state = models.CharField(default='S', max_length=2, choices=STATES, blank=True)
 
     class Meta:
