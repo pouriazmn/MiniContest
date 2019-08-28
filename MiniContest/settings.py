@@ -53,7 +53,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'SummerContest1398.urls'
+ROOT_URLCONF = 'MiniContest.urls'
 
 TEMPLATES = [
     {
