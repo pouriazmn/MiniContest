@@ -24,6 +24,8 @@ class TeamAdmin(admin.ModelAdmin):
         'team_actions'
     )
 
+    search_fields = ('name', )
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
