@@ -195,3 +195,18 @@ class Duel(models.Model):
             self.req_returned = True
             self.to_returned = True
         super().save(*args, **kwargs)
+
+
+class Transaction(models.Model):
+    TRANSACTION_CHOICES = (
+        ('PS', 'Problem Solving'),
+        ('DL', 'Duel'),
+        ('MF', 'Mafia'),
+    )
+    decreased_from = models.ForeignKey(Team, related_name='decreases', related_query_name='decrease',
+                                       on_delete=models.SET_NULL)
+    increased_to = models.ForeignKey(Team, related_name='increases', related_query_name='increase',
+                                     on_delete=models.SET_NULL)
+    amount = models.FloatField()
+
+    for_ = models.CharField(max_length=1, choices=TRANSACTION_CHOICES)
