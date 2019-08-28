@@ -24,6 +24,8 @@ class TeamAdmin(admin.ModelAdmin):
         'team_actions'
     )
 
+    ordering = ('name', )
+
     search_fields = ('name', )
 
     def get_urls(self):

@@ -53,12 +53,20 @@ class Problem(models.Model):
         return f"{self.type}-{self.id}({self.level_display()})"
 
 
+class TeamManager(models.Manager):
+
+    def get_queryset(self):
+        return super().get_queryset().exclude(id__lt=0)
+
+
 class Team(models.Model):
 
     name = models.TextField()
     score = models.FloatField(default=500)
     problems = models.ManyToManyField(Problem, through='SolvingAttempt', related_name='teams',
                                       related_query_name='team')
+
+    objects = TeamManager()
 
     class Meta:
         ordering = ('-score', )
