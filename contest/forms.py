@@ -23,7 +23,7 @@ class GeneralTeamForm(forms.Form):
             strip=False,
             initial=str(team)
         )
-        self.fields['team_score'] = forms.IntegerField(
+        self.fields['team_score'] = forms.FloatField(
             disabled=True,
             initial=team.score
         )
