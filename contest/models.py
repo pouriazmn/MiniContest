@@ -116,7 +116,7 @@ class SolvingAttempt(models.Model):
     start_time = models.DateTimeField(blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
     cost = models.IntegerField()
-    grade = models.IntegerField(validators=(MinValueValidator(0), MaxValueValidator(200)), null=True, blank=True)
+    grade = models.IntegerField(validators=(MinValueValidator(0), MaxValueValidator(100)), null=True, blank=True)
     state = models.CharField(default='S', max_length=2, choices=STATES, blank=True)
 
     class Meta:
