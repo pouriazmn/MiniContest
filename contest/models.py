@@ -14,19 +14,19 @@ class Problem(models.Model):
             "display_name": "easy",
             "min_cost": 50,
             "max_cost": 150,
-            "reward": 1
+            "reward": [0, 0.2, 0.8, 1, 1.5]
         },
         "M": {
             "display_name": "medium",
             "min_cost": 100,
             "max_cost": 200,
-            "reward": 1
+            "reward": [0, 0.4, 1, 1.25, 1.75]
         },
         "H": {
             "display_name": "hard",
             "min_cost": 150,
             "max_cost": 320,
-            "reward": 1
+            "reward": [0, 0.66, 1.26, 1.66, 2]
         }
     }
     id = models.IntegerField(primary_key=True)
@@ -39,8 +39,9 @@ class Problem(models.Model):
     def level_display(self):
         return self.__class__.LEVELS[self.level]['display_name']
 
-    def calculate_reward(self, cost):
-        return self.__class__.LEVELS[self.level]['reward'] * cost
+    def calculate_reward(self, cost, grade):
+        return cost * \
+               self.__class__.LEVELS[self.level]['reward'][int(grade / 100 * 4)]
 
     def validate_cost(self, cost):
         l = self.__class__.LEVELS[self.level]
@@ -132,7 +133,7 @@ class SolvingAttempt(models.Model):
             Transaction.objects.create(decreased_from=self.team, increased_to=Team.SHEKIB_JIB, amount=self.cost,
                                        reason=Transaction.PROBLEM_REQ)
         if cal_reward:
-            price = self.problem.calculate_reward(self.cost) * (self.grade/100)
+            price = self.problem.calculate_reward(self.cost, int(self.grade))
             self.team.score += price
             Transaction.objects.create(decreased_from=Team.SHEKIB_JIB, increased_to=self.team, amount=price,
                                        reason=Transaction.PROBLEM_SLV)
