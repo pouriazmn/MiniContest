@@ -36,14 +36,18 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+
+    'whitenoise.runserver_nostatic',  # < Per Whitenoise, to disable built in
     'django.contrib.staticfiles',
+
     'corsheaders',
     'rest_framework',
-    'contest',
+    'MiniContest.contest',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -58,7 +62,7 @@ ROOT_URLCONF = 'MiniContest.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), 'dist'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -133,4 +137,31 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/2.2/howto/static-files/
+
+# When Vue Builds, path will be `/static/css/...` so we will have Django Serve
+# In Production, it's recommended use an alternative approach such as:
+# http://whitenoise.evans.io/en/stable/django.html?highlight=django
+
+MIDDLEWARE_CLASSES = (
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+)
+
 STATIC_URL = '/static/'
+# Place static in the same location as webpack build files
+STATIC_ROOT = os.path.join(BASE_DIR, 'dist', 'static')
+STATICFILES_DIRS = []
+
+
+##########
+# STATIC #
+##########
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Insert Whitenoise Middleware at top but below Security Middleware
+# MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware',)
+# http://whitenoise.evans.io/en/stable/django.html#make-sure-staticfiles-is-configured-correctly
+

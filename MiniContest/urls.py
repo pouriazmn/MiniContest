@@ -21,7 +21,7 @@ from django.urls import path, include
 from .views import index
 
 urlpatterns = [
-    path('api/', include('contest.urls')),
+    path('api/', include('MiniContest.contest.urls')),
     path('admin/', admin.site.urls),
     path('', index),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
