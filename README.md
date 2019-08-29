@@ -2,9 +2,12 @@
 
 ```bash
 sudo apt install virtualenv
-virtualenv -p pyhton3 env
-source env/bin/activate
+sudo apt install npm
+virtualenv -p pyhton3 .venv
+source .venv/bin/activate
 pip install -r requirments.txt
+npm install
+npm run build
 python manage.py migrate
 python manage.py createsuperuser admin
 sudo ufw allow 8080

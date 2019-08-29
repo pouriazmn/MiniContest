@@ -1,6 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from rest_framework import generics
+from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,7 +10,7 @@ from .models import *
 from .serializers import *
 
 
-class ScoreboardView(generics.ListAPIView):
+class ScoreboardView(viewsets.ViewSetMixin, generics.ListAPIView):
     serializer_class = TeamSerializers
     queryset = Team.objects.all()
 
@@ -19,3 +20,8 @@ class ScoreboardView(generics.ListAPIView):
         for ind, each in enumerate(data):
             each['rank'] = ind+1
         return Response(data)
+
+
+class PurchaseProblemView(viewsets.ViewSetMixin, generics.CreateAPIView):
+    serializer_class = ProblemSerializer
+    queryset = Problem.objects.all()
